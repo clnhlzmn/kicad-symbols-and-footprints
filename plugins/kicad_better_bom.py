@@ -8,7 +8,11 @@
     Generate a csv BOM list.
     Components are sorted by ref and grouped by value
     Fields are (if exist)
-    Item, Qty, Reference(s), Value, LibPart, Footprint, Datasheet
+    Qty, Reference(s), description, mfg1, mfg1pn, mfg2, mfg2pn
+    
+    To append additional lines to the generated BOM include a file
+    "%O-aux.csv" in the project directory. The lines in the aux BOM
+    will be appended to the generated BOM.
 
     Command line:
     python "pathToFile/bom_csv_grouped_by_value.py" "%I" "%O.csv"
@@ -20,17 +24,57 @@ from __future__ import print_function
 import kicad_netlist_reader
 import csv
 import sys
+import os
+
+desc = "description"
+mfg1 = "mfg1"
+mfg1pn = "mfg1pn"
+mfg2 = "mfg2"
+mfg2pn = "mfg2pn"
+hmtFieldNames = [desc, mfg1, mfg1pn, mfg2, mfg2pn]
+
+def toLower(str):
+    return str.lower()
+
+def getCaseInsensitiveField(comp, fieldName):
+    """
+    getCaseInsensitiveField gets a field from a component given a field name in a case insensitive way.
+    """
+    fieldNames = map(toLower, comp.getFieldNames())
+    fieldName = fieldName.lower()
+    if (fieldName not in fieldNames):
+        return None
+    return comp.getField(comp.getFieldNames()[fieldNames.index(fieldName)])
+
+def equByHMTFields(comp, other):
+    """
+    equByHMTFields determines if two components are equal based on the HMT fields listed above.
+    It returns None if the component's don't have values for any of hmtFieldNames
+    """
+    compFieldNames = set(map(toLower, comp.getFieldNames())) & set(hmtFieldNames)
+    otherFieldNames = set(map(toLower, other.getFieldNames())) & set(hmtFieldNames)
+    allFieldNames = compFieldNames | otherFieldNames
+    if len(allFieldNames) == 0:
+        return None
+    result = True
+    for name in allFieldNames:
+        compField = getCaseInsensitiveField(comp, name)
+        otherField = getCaseInsensitiveField(other, name)
+        result = result and compField == otherField
+    return result
 
 def myEqu(self, other):
     """myEqu is a more advanced equivalence function for components which is
     used by component grouping. Normal operation is to group components based
     on their value and footprint.
 
-    In this example of a custom equivalency operator we compare the
-    value, the part name and the footprint.
+    In this example of a custom equivalency operator we compare the, description field (if existing),
+    then value, the part name and the footprint.
     """
-    result = True
-    if self.getValue() != other.getValue():
+    result = equByHMTFields(self, other)
+    if result != None:
+        return result
+    elif self.getValue() != other.getValue():
         result = False
     elif self.getPartName() != other.getPartName():
         result = False
@@ -59,80 +103,34 @@ try:
     f = open(sys.argv[2], 'w')
 except IOError:
     e = "Can't open output file for writing: " + sys.argv[2]
-    print( __file__, ":", e, sys.stderr )
+    print(__file__, ":", e, file=sys.stderr)
     f = sys.stdout
 
 # subset the components to those wanted in the BOM, controlled
 # by <configure> block in kicad_netlist_reader.py
 components = net.getInterestingComponents()
 
-compfields = net.gatherComponentFieldUnion(components)
-partfields = net.gatherLibPartFieldUnion()
-
-# remove Reference, Value, Datasheet, and Footprint, they will come from 'columns' below
-partfields -= set( ['Reference', 'Value', 'Datasheet', 'Footprint'] )
-
-columnset = compfields | partfields     # union
-
-# prepend an initial 'hard coded' list and put the enchillada into list 'columns'
-#columns = ['Item', 'Qty', 'Reference(s)', 'Value', 'LibPart', 'Footprint', 'Datasheet'] + sorted(list(columnset))
-columns = ['Qty', 'Reference(s)', 'Value', 'LibPart', 'Footprint', 'Datasheet'] + sorted(list(columnset))
+columns = ['Qty', 'Reference(s)', 'description', 'mfg1', 'mfg1pn', 'mfg2', 'mfg2pn']
 
 # Create a new csv writer object to use as the output formatter
-out = csv.writer( f, lineterminator='\n', delimiter=',', quotechar='\"', quoting=csv.QUOTE_ALL )
+out = csv.writer(f, lineterminator='\n', delimiter=',', quotechar='\"', quoting=csv.QUOTE_ALL)
 
 # override csv.writer's writerow() to support encoding conversion (initial encoding is utf8):
-def writerow( acsvwriter, columns ):
+def writerow(acsvwriter, columns):
     utf8row = []
     for col in columns:
-        utf8row.append( str(col) )  # currently, no change
-    acsvwriter.writerow( utf8row )
-
-# Output a set of rows as a header providing general information
-#writerow( out, ['Source:', net.getSource()] )
-#writerow( out, ['Date:', net.getDate()] )
-#writerow( out, ['Tool:', net.getTool()] )
-#writerow( out, ['Generator:', sys.argv[0]] )
-#writerow( out, ['Component Count:', len(components)] )
-#writerow( out, [] )
-#writerow( out, ['Individual Components:'] )
-#writerow( out, [] )                        # blank line
-#writerow( out, columns )
+        utf8row.append(str(col))  # currently, no change
+    acsvwriter.writerow(utf8row)
 
 # Output all the interesting components individually first:
 row = []
-#for c in components:
-    #del row[:]
-    #row.append('')                                      # item is blank in individual table
-    #row.append('')                                      # Qty is always 1, why print it
-    #row.append( c.getRef() )                            # Reference
-    #row.append( c.getValue() )                          # Value
-    #row.append( c.getLibName() + ":" + c.getPartName() ) # LibPart
-    #row.append( c.getDescription() )
-    #row.append( c.getFootprint() )
-    #row.append( c.getDatasheet() )
-#
-     #from column 7 upwards, use the fieldnames to grab the data
-    #for field in columns[7:]:
-        #row.append( c.getField( field ) );
-#
-    #writerow( out, row )
 
-
-#writerow( out, [] )                        # blank line
-#writerow( out, [] )                        # blank line
-#writerow( out, [] )                        # blank line
-#
-#writerow( out, ['Collated Components:'] )
-#writerow( out, [] )                        # blank line
-writerow( out, columns )                   # reuse same columns
-
-
+# header
+writerow(out, columns)                   # reuse same columns
 
 # Get all of the components in groups of matching parts + values
 # (see kicad_netlist_reader.py)
 grouped = net.groupComponents(components)
-
 
 # Output component information organized by group, aka as collated:
 item = 0
@@ -148,21 +146,32 @@ for group in grouped:
         refs += component.getRef()
         c = component
 
-    # Fill in the component groups common data
-    # columns = ['Item', 'Qty', 'Reference(s)', 'Value', 'LibPart', 'Footprint', 'Datasheet'] + sorted(list(columnset))
-    #item += 1
-    #row.append( item )
-    row.append( len(group) )
-    row.append( refs );
-    row.append( c.getValue() )
-    row.append( c.getLibName() + ":" + c.getPartName() )
-    row.append( net.getGroupFootprint(group) )
-    row.append( net.getGroupDatasheet(group) )
+    row.append(len(group))
+    row.append(refs)
 
-    # from column 7 upwards, use the fieldnames to grab the data
-    for field in columns[6:]:
-        row.append( net.getGroupField(group, field) );
+    # from column 2 upwards, use the fieldnames to grab the data
+    for field in columns[2:]:
+        row.append(net.getGroupField(group, field))
 
-    writerow( out, row  )
+    writerow(out, row)
+
+#append rows from auxiliary bom
+auxBomFileName = os.path.splitext(os.path.basename(sys.argv[2]))[0] + "-aux.csv"
+try:
+    with(open(auxBomFileName, 'r')) as auxBomFile:
+        csvRows = csv.DictReader(auxBomFile)
+        fieldnames = csvRows.fieldnames
+        if (not set(columns).issubset(fieldnames)):
+            print(__file__, ": ", "auxiliary bom must contain ", columns)
+        else:
+            for row in csvRows:
+                def rowValueForName(name):
+                    return row[name]
+                writerow(out, map(rowValueForName, columns))
+    
+except IOError:
+    e = "No auxiliary bom found at " + auxBomFileName
+    print(__file__, ":", e, file=sys.stdout)
+
 
 f.close()
