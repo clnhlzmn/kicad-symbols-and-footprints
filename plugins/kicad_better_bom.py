@@ -110,6 +110,14 @@ except IOError:
 # by <configure> block in kicad_netlist_reader.py
 components = net.getInterestingComponents()
 
+filteredComponents = []
+for component in components:
+    exclude = getCaseInsensitiveField(component, 'exclude')
+    if exclude is None:
+        filteredComponents.append(component)
+
+components = filteredComponents
+
 columns = ['Qty', 'Reference(s)', 'description', 'mfg1', 'mfg1pn', 'mfg2', 'mfg2pn']
 
 # Create a new csv writer object to use as the output formatter
