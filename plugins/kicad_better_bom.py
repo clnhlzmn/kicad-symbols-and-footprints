@@ -164,9 +164,10 @@ for group in grouped:
     writerow(out, row)
 
 #append rows from auxiliary bom
-auxBomFileName = os.path.splitext(os.path.basename(sys.argv[2]))[0] + "-aux.csv"
+auxBomFileName = os.path.splitext(sys.argv[2])[0] + "-aux.csv"
 try:
     with(open(auxBomFileName, 'r')) as auxBomFile:
+        print("aux bom found at " + auxBomFileName)
         csvRows = csv.DictReader(auxBomFile)
         fieldnames = csvRows.fieldnames
         if (not set(columns).issubset(fieldnames)):
