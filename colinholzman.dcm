@@ -1,5 +1,10 @@
 EESchema-DOCLIB  Version 2.0
 #
+$CMP MCP111T-...I_TT
+D Supply Voltage Monitor, SOT-23
+K supply voltage supervisor
+$ENDCMP
+#
 $CMP Si3443
 D P-MOSFET transistor, drain/gate/source
 K transistor PMOS P-MOS P-MOSFET
