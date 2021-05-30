@@ -1,0 +1,25 @@
+(module DO3314-...MLC (layer F.Cu) (tedit 60B3A6C9)
+  (fp_text reference REF** (at 0 -2.794) (layer F.SilkS)
+    (effects (font (size 1 1) (thickness 0.15)))
+  )
+  (fp_text value DO3314-...MLC (at 0 2.921) (layer F.Fab)
+    (effects (font (size 1 1) (thickness 0.15)))
+  )
+  (fp_line (start 0.4318 1.651) (end -0.4318 1.651) (layer F.SilkS) (width 0.12))
+  (fp_line (start -0.4318 -1.651) (end 0.4318 -1.651) (layer F.SilkS) (width 0.12))
+  (pad 1 smd custom (at -1.5748 0) (size 0.254 0.254) (layers F.Cu F.Paste F.Mask)
+    (options (clearance outline) (anchor circle))
+    (primitives
+      (gr_poly (pts
+         (xy 0.9398 -1.2446) (xy 0.3302 -1.2446) (xy 0.3302 1.2446) (xy 0.9398 1.2446) (xy 0.9398 1.8796)
+         (xy -0.3048 1.8796) (xy -0.3048 -1.8796) (xy 0.9398 -1.8796)) (width 0.1))
+    ))
+  (pad 2 smd custom (at 1.5748 0 180) (size 0.254 0.254) (layers F.Cu F.Paste F.Mask)
+    (zone_connect 0)
+    (options (clearance outline) (anchor circle))
+    (primitives
+      (gr_poly (pts
+         (xy 0.9398 -1.2446) (xy 0.3302 -1.2446) (xy 0.3302 1.2446) (xy 0.9398 1.2446) (xy 0.9398 1.8796)
+         (xy -0.3048 1.8796) (xy -0.3048 -1.8796) (xy 0.9398 -1.8796)) (width 0.1))
+    ))
+)
