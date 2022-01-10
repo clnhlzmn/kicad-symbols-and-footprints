@@ -22,6 +22,7 @@ from __future__ import print_function
 
 # Import the KiCad python helper module and the csv formatter
 import kicad_netlist_reader
+import kicad_utils
 import csv
 import sys
 import os
@@ -40,7 +41,7 @@ def getCaseInsensitiveField(comp, fieldName):
     """
     getCaseInsensitiveField gets a field from a component given a field name in a case insensitive way.
     """
-    fieldNames = map(toLower, comp.getFieldNames())
+    fieldNames = list(map(toLower, comp.getFieldNames()))
     fieldName = fieldName.lower()
     if (fieldName not in fieldNames):
         return None
@@ -100,10 +101,10 @@ net = kicad_netlist_reader.netlist(sys.argv[1])
 # Open a file to write to, if the file cannot be opened output to stdout
 # instead
 try:
-    f = open(sys.argv[2], 'w')
+    f = kicad_utils.open_file_write(sys.argv[2], 'w')
 except IOError:
     e = "Can't open output file for writing: " + sys.argv[2]
-    print(__file__, ":", e, file=sys.stderr)
+    print( __file__, ":", e, sys.stderr )
     f = sys.stdout
 
 # subset the components to those wanted in the BOM, controlled
